@@ -1,6 +1,6 @@
 # 🌱 Soil Saturated Hydraulic Conductivity (Ksat) Prediction
 
-This project uses machine learning to predict **saturated hydraulic conductivity (Ksat)** from soil characteristics. It includes data cleaning, feature selection, model training, and an interactive [Streamlit](https://streamlit.io) app for real-time prediction.
+This project uses machine learning to predict **saturated hydraulic conductivity (Ksat)** from soil characteristics. It includes data cleaning, feature selection, model training, and an interactive [Streamlit](https://streamlit.io) app for prediction.
 
 ---
 
