@@ -89,6 +89,16 @@ Then open your browser at [http://localhost:8501](http://localhost:8501) to use 
 
 ---
 
+## 😋 Deployment & Web App
+
+- To make the model accessible and easy to use, we built a Streamlit-based web application that allows users to:
+
+- Input soil properties manually through a clean frontend
+
+- Run predictions on saturated hydraulic conductivity (Ksat) using our trained LightGBM model
+
+- Instantly view the predicted Ksat (in cm/hr) value with a responsive and intuitive interface
+
 ## 📌 Notes
 
 - The `data/` folder and large files are excluded via `.gitignore`
