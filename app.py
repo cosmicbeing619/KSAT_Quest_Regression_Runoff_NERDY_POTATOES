@@ -11,7 +11,7 @@ model_path = "ksat_model.joblib"
 
 # List of features user provides
 user_features = [
-    "bulkdensity", "clay(%)", "medium",
+    "bulkdensity", "clay(%)", "medium", "coarse", "fine", "verycoarse",
     "organiccarbon", "sand(%)", "silt(%)", "veryfine"
 ]
 
