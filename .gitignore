@@ -1,0 +1,28 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Jupyter/IPython
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+env/
+venv/
+
+# Data
+data/
+*.xlsx
+*.csv
+
+# Model & results
+*.joblib
+*.png
+
+# IDE/OS stuff
+.vscode/
+.idea/
+.DS_Store
+
+# Streamlit
+.streamlit/
