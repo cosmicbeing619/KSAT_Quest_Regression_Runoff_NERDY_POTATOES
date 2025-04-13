@@ -1,24 +1,42 @@
 # 🌱 Soil Saturated Hydraulic Conductivity (Ksat) Prediction
 
-This project uses machine learning to predict **saturated hydraulic conductivity (Ksat)** from soil characteristics. It includes data cleaning, feature selection, model training, and an interactive [Streamlit](https://streamlit.io) app for prediction.
+This project predicts **saturated hydraulic conductivity (Ksat)** from preprocessed soil data using a **Random Forest Regressor**. It includes:
+
+- Hyperparameter tuning on the full dataset
+- Repeated experiments on progressively smaller random subsets
+- Visualization of RMSLE and R² performance
+- Model saving and prediction outputs
 
 ---
 
 ## 📁 Project Structure
 
 ```
-ksat-project/
-├── app.py                  # Streamlit app
-├── main.py                 # Pipeline runner (clean → feature → train)
+KSAT_QUEST_REGRESSION_RUNOFF_NERDY_POTATOES/
+│
+├── data/
+│   ├── cleaned_data.xlsx              # Cleaned raw data (intermediate)
+│   ├── data.xlsx                      # Original raw data
+│   └── preprocessed_data.xlsx         # Final data used for modeling
+│
+├── outputs/
+│   ├── best_rf_model.joblib           # Trained Random Forest model
+│   ├── rf_r2_plot.png                 # R² vs training sample size
+│   ├── rf_rmsle_plot.png              # RMSLE vs training sample size
+│   └── rf_test_predictions.csv        # Predictions from best-performing model
+│
 ├── src/
-│   ├── data_cleaning.py    # Load & clean soil Excel sheets
-│   ├── feature_selection.py # Feature selection + unit conversion
-│   └── model_training.py   # LightGBM training + subset experiments
-├── data/                   # Raw and cleaned data (in .gitignore)
-├── ksat_model.joblib       # Trained LightGBM model
-├── requirements.txt        # Project dependencies
-├── .gitignore              # Git ignore rules
-└── README.md               # You're reading it!
+│   ├── data_cleaning.py               # Data cleaning and preprocessing functions
+│   ├── evaluate_rf_subsets.py         # Model evaluation on various subset sizes
+│   ├── feature_selection.py           # (Optional) Feature selection logic
+│   └── train_rf_model.py              # Training and hyperparameter tuning
+│
+├── .gitignore                         # Ignore models, __pycache__, etc.
+├── app.py                             # (Optional) Flask/FastAPI app or Streamlit dashboard
+├── main.py                            # Entry point (optional orchestration or CLI)
+├── README.md                          # Project documentation
+└── requirements.txt                   # Python dependencies
+
 ```
 
 ---
@@ -40,7 +58,7 @@ python main.py
 This script will:
 - Load and clean raw Excel sheets
 - Select relevant features
-- Train a LightGBM model using progressively smaller subsets
+- Train a Random Forest model using progressively smaller subsets
 
 ### 3. 🌐 Launch the Streamlit App
 
@@ -56,9 +74,9 @@ Then open your browser at [http://localhost:8501](http://localhost:8501) to use 
 
 - **RMSLE and R² metrics** are calculated over 50 trials for each subset size.
 - Results are saved to:
-  - `subset_experiment_metrics.csv`
-  - `subset_test_predictions.csv`
-  - Plots: `rmsle_vs_sample_size.png`, `r2_vs_sample_size.png`, etc.
+  - `rf_test_predictions.csv`
+  - Plots: `rf_rmsle_plot.png`, `rf_r2_plot.png`.
+  - Model: `best_rf_model`
 
 ---
 
@@ -81,4 +99,4 @@ Then open your browser at [http://localhost:8501](http://localhost:8501) to use 
 
 ## 🙋‍♀️ Author
 
-Made by [Your Name] — feel free to contribute, report issues, or fork this repo!
+Made by Nerdy Potatoes — feel free to contribute, report issues, or fork this repo!
