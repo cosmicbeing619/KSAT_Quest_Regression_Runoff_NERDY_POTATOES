@@ -1,66 +1,57 @@
 # 🌱 Soil Saturated Hydraulic Conductivity (Ksat) Prediction
 
-A reproducible machine learning pipeline to **predict saturated hydraulic conductivity (Ksat)** from processed soil property data.  
-Includes **hyperparameter tuning, subset experiments, visualizations, interpretability analysis, and a deployed web application** for interactive predictions.
+A reproducible ML pipeline to **predict saturated hydraulic conductivity (Ksat)** from soil property data.  
+Includes **hyperparameter tuning, subset experiments, visualizations, interpretability,** and a **Streamlit** web app.
 
-🔗 **Live Demo:** [Streamlit App](https://ksattest-cqjzbncryj9gavgmnuzkqr.streamlit.app/)
+🔗 **Live Demo:** [Streamlit App](https://ksattest-cqjzbncryj9gavgmnuzkqr.streamlit.app/)  
+👉 See the full **[Model Card](MODEL_CARD.md)** for data, training, metrics, and limitations.
 
 ---
 
 ## 📌 Overview
+**Ksat** is key for hydrologic modeling, irrigation planning, and soil science.  
+This project trains and evaluates a **Random Forest Regressor** (plus optional LightGBM baseline) to estimate Ksat.
 
-**Ksat** is a key soil property for hydrologic modeling, irrigation planning, and soil science research.  
-This project builds and evaluates a **Random Forest Regressor** (and optional LightGBM model) to estimate Ksat from soil characteristics.
-
-### Key Features:
-- 📊 **Hyperparameter tuning** on the full dataset  
-- 🔁 **Subset experiments** on progressively smaller training sizes  
-- 📈 **Visualizations** of RMSLE and R² performance across trials  
-- 🧠 **Model interpretability** via permutation importance & partial dependence plots  
-- 💾 **Model saving** for reproducible predictions  
-- 🌐 **Streamlit dashboard** for interactive use
+**Highlights**
+- 📊 Hyperparameter tuning with **RandomizedSearchCV (5-fold, R²)**
+- 🔁 Subset experiments across shrinking training sizes
+- 📈 Visualizations: R², RMSLE, Predicted vs Actual
+- 🧠 Interpretability: permutation importance (optional)
+- 🌐 Streamlit app for interactive predictions
 
 ---
 
-## 📁 Project Structure
+## 📂 Project Structure
 
 ```
 KSAT_QUEST_REGRESSION_RUNOFF_NERDY_POTATOES/
-│
-├── data/
-│ ├── cleaned_data.xlsx # Cleaned raw data (intermediate)
-│ ├── data.xlsx # Original raw data
-│ └── preprocessed_data.xlsx # Final data used for modeling
-│
-├── outputs/
-│ ├── best_rf_model.joblib # Trained Random Forest model
-│ ├── rf_r2_plot.png # R² vs training sample size
-│ ├── rf_rmsle_plot.png # RMSLE vs training sample size
-│ └── rf_test_predictions.csv # Predictions from best-performing model
-│
-├── src/
-│ ├── data_cleaning.py # Data cleaning and preprocessing functions
-│ ├── evaluate_rf_subsets.py # Model evaluation on various subset sizes
-│ ├── feature_selection.py # (Optional) Feature selection logic
-│ └── train_rf_model.py # Training and hyperparameter tuning
-│
-├── tests/ # Unit tests for reproducibility
-│ ├── test_data.py
-│ └── test_model.py
-│
-├── assets/ # Images for README
-│ ├── app.png
-│ ├── pred_vs_actual.png
-│ ├── perm_importance.png
-│ └── pdp_top_feature.png
-│
-├── .gitignore
-├── app.py # Streamlit dashboard
-├── main.py # Pipeline orchestration
-├── requirements.txt # Python dependencies
-├── Makefile # Quick-run commands
-├── MODEL_CARD.md # Model documentation
-└── README.md # This file
+├─ data/
+│ ├─ data.xlsx # Raw data
+│ ├─ cleaned_data.xlsx # Cleaned (generated)
+│ └─ preprocessed_data.xlsx # Modeling table (generated)
+├─ outputs/
+│ ├─ best_rf_model.joblib # Trained RF model
+│ ├─ rf_test_predictions.csv # Test predictions
+│ ├─ rf_r2_plot.png # R² vs training size
+│ └─ rf_rmsle_plot.png # RMSLE vs training size
+├─ assets/
+│ ├─ pred_vs_actual.png
+│ ├─ rf_r2_plot.png
+│ └─ rf_rmsle_plot.png
+├─ src/
+│ ├─ data_cleaning.py
+│ ├─ train_rf_model.py
+│ ├─ evaluate_rf_subsets.py
+│ └─ make_pred_vs_actual_plot.py
+├─ tests/
+│ ├─ test_data.py
+│ └─ test_model.py
+├─ app.py
+├─ main.py
+├─ MODEL_CARD.md
+├─ requirements.txt
+├─ Makefile
+└─ README.md
 
 ```
 
@@ -96,6 +87,27 @@ streamlit run app.py
 
 Then open your browser at [http://localhost:8501](http://localhost:8501) to use the interactive predictor.
 
+---
+
+### 4. 📊 Results
+
+```bash
+Held-out test (20% split)
+
+R²: 0.936
+
+RMSLE: 0.488 cm/hr
+
+Figures
+
+Predicted vs Actual
+
+R² vs Training Size
+
+RMSLE vs Training Size
+
+Artifacts are saved in outputs/ and copied into assets/ for display.
+```
 ---
 
 ## 📊 Model Evaluation
