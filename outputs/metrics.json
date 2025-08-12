@@ -1,0 +1,40 @@
+{
+  "r2": 0.9361454747261675,
+  "rmsle": 0.48788530008582726,
+  "best_params": {
+    "n_estimators": 200,
+    "min_samples_split": 2,
+    "min_samples_leaf": 1,
+    "max_features": "log2",
+    "max_depth": 24
+  },
+  "train_shape": [
+    16028,
+    17
+  ],
+  "test_shape": [
+    4007,
+    17
+  ],
+  "num_features": [
+    "bulk_density",
+    "clay",
+    "coarse",
+    "fine",
+    "ksat",
+    "medium",
+    "organic_carbon",
+    "sand",
+    "silt",
+    "site_label",
+    "source_reference",
+    "textural_class",
+    "very_coarse",
+    "very_fine"
+  ],
+  "cat_features": [
+    "field_lab",
+    "method",
+    "units"
+  ]
+}
