@@ -1,97 +1,110 @@
-# evaluate_rf_subsets.py
-import pandas as pd
+# src/evaluate_rf_subsets.py
+from pathlib import Path
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestRegressor
+
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_log_error, r2_score
-from sklearn.preprocessing import LabelEncoder
-from tqdm import tqdm
-import joblib
-import warnings
+from sklearn.metrics import r2_score, mean_squared_log_error
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.impute import SimpleImputer
 
-warnings.filterwarnings("ignore")
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / "data"
+OUT_DIR = ROOT / "outputs"
+OUT_DIR.mkdir(exist_ok=True)
 
-# Load dataset
-df = pd.read_excel("preprocessed_data.xlsx")
+PREPROC_PATH = DATA_DIR / "preprocessed_data.xlsx"
+R2_PNG = OUT_DIR / "rf_r2_plot.png"
+RMSLE_PNG = OUT_DIR / "rf_rmsle_plot.png"
 
-# Encode categorical columns
-categorical_cols = df.select_dtypes(include="object").columns
-for col in categorical_cols:
-    df[col] = df[col].astype(str)
-    le = LabelEncoder()
-    df[col] = le.fit_transform(df[col])
+TARGET = "ksat_cm_hr"
 
-# Load best model for hyperparameters
-best_model = joblib.load("best_rf_model.joblib")
-best_params = best_model.get_params()
+def rmsle(y_true, y_pred):
+    y_pred = np.clip(y_pred, 0, None)
+    return np.sqrt(mean_squared_log_error(y_true, y_pred))
 
-# Subset sizes
-subset_sizes = list(range(len(df), 2000, -2000)) + [2000]
-rmsle_results = []
-r2_results = []
+def build_pipeline(num_cols, cat_cols):
+    pre = ColumnTransformer(
+        [
+            ("num", SimpleImputer(strategy="median"), num_cols),
+            ("cat", Pipeline([
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                ("onehot", OneHotEncoder(handle_unknown="ignore"))
+            ]), cat_cols),
+        ],
+        remainder="drop",
+        verbose_feature_names_out=False
+    )
+    model = RandomForestRegressor(
+        n_estimators=400, max_depth=None, min_samples_split=2,
+        min_samples_leaf=1, max_features="sqrt", n_jobs=-1, random_state=42
+    )
+    return Pipeline([("prep", pre), ("model", model)])
 
-# Track best subset performance
-best_r2 = -np.inf
-final_predictions_df = None
+def run(fracs=(1.0, 0.75, 0.5, 0.25, 0.1), trials=30, base_seed=42):
+    if not PREPROC_PATH.exists():
+        raise FileNotFoundError(f"Missing preprocessed file: {PREPROC_PATH}")
 
-for subset_size in subset_sizes:
-    rmsle_scores = []
-    r2_scores = []
+    df = pd.read_excel(PREPROC_PATH)
+    if TARGET not in df.columns:
+        raise ValueError(f"Target '{TARGET}' not found.")
 
-    for _ in tqdm(range(50), desc=f"Subset size {subset_size}"):
-        sample = df.sample(n=subset_size, random_state=np.random.randint(10000))
-        X_sample = sample.drop(columns='ksat_cm_hr')
-        y_sample = sample['ksat_cm_hr']
+    y_full = df[TARGET].astype(float)
+    X_full = df.drop(columns=[TARGET]).copy()
 
-        X_train, X_test, y_train, y_test = train_test_split(X_sample, y_sample, test_size=0.2, random_state=42)
-        model = RandomForestRegressor(**best_params)
-        model.fit(X_train, y_train)
+    num_cols = X_full.select_dtypes(include=[np.number]).columns.tolist()
+    cat_cols = [c for c in X_full.columns if c not in num_cols]
 
-        y_pred = model.predict(X_test)
-        y_pred = np.maximum(y_pred, 0)
+    r2_means, rmsle_means, sizes = [], [], []
 
-        rmsle = np.sqrt(mean_squared_log_error(y_test, y_pred))
-        r2 = r2_score(y_test, y_pred)
+    rng = np.random.RandomState(base_seed)
 
-        rmsle_scores.append(rmsle)
-        r2_scores.append(r2)
+    for frac in fracs:
+        r2s, rmsles = [], []
+        for _ in range(trials):
+            # sample subset for this trial
+            X_s = X_full.sample(frac=frac, random_state=rng.randint(0, 10_000))
+            y_s = y_full.loc[X_s.index]
 
-        if r2 > best_r2:
-            best_r2 = r2
-            final_predictions_df = pd.DataFrame({
-                "Actual_ksat_cm_hr": y_test.values,
-                "Predicted_ksat_cm_hr": y_pred
-            })
+            X_tr, X_te, y_tr, y_te = train_test_split(
+                X_s, y_s, test_size=0.2, random_state=42
+            )
 
-    rmsle_results.append(np.mean(rmsle_scores))
-    r2_results.append(np.mean(r2_scores))
+            pipe = build_pipeline(num_cols, cat_cols)
+            pipe.fit(X_tr, y_tr)
+            y_hat = pipe.predict(X_te)
 
-# Save best predictions
-if final_predictions_df is not None:
-    final_predictions_df.to_csv("rf_test_predictions.csv", index=False)
-    print("📄 Saved best predictions to 'rf_test_predictions.csv'.")
+            r2s.append(r2_score(y_te, y_hat))
+            rmsles.append(rmsle(y_te.values, y_hat))
 
-# Plot RMSLE
-plt.figure(figsize=(12, 6))
-plt.plot(subset_sizes, rmsle_results, marker='o', label='RMSLE')
-plt.xlabel('Training Sample Size')
-plt.ylabel('RMSLE')
-plt.title('RMSLE vs Training Sample Size')
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.savefig("rf_rmsle_plot.png")
-plt.show()
+        r2_means.append(float(np.mean(r2s)))
+        rmsle_means.append(float(np.mean(rmsles)))
+        sizes.append(int(len(X_full) * frac))
 
-# Plot R²
-plt.figure(figsize=(12, 6))
-plt.plot(subset_sizes, r2_results, marker='s', color='green', label='R² Score')
-plt.xlabel('Training Sample Size')
-plt.ylabel('R² Score')
-plt.title('R² Score vs Training Sample Size')
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.savefig("rf_r2_plot.png")
-plt.show()
+    # R² plot
+    plt.figure()
+    plt.plot(sizes, r2_means, marker="o")
+    plt.xlabel("Training sample size")
+    plt.ylabel("R²")
+    plt.title("Random Forest: R² vs Training Size (mean over trials)")
+    plt.savefig(R2_PNG, bbox_inches="tight")
+    plt.close()
+
+    # RMSLE plot
+    plt.figure()
+    plt.plot(sizes, rmsle_means, marker="o")
+    plt.xlabel("Training sample size")
+    plt.ylabel("RMSLE")
+    plt.title("Random Forest: RMSLE vs Training Size (mean over trials)")
+    plt.savefig(RMSLE_PNG, bbox_inches="tight")
+    plt.close()
+
+    print(f"🖼️ Saved: {R2_PNG}")
+    print(f"🖼️ Saved: {RMSLE_PNG}")
+
+if __name__ == "__main__":
+    run()
